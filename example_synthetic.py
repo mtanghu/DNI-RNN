@@ -14,7 +14,7 @@ random_input = torch.ones(10, BATCH_SIZE, size)
 loss = nn.CrossEntropyLoss()
 mse_loss = nn.MSELoss()
 
-# this will create the synthetic gradients
+# this will create the synthetic gradients (this is M_T in the paper)
 synth = nn.Sequential(nn.Linear(size, size), nn.GELU(), nn.Linear(size, size))
 
 # paper says to intialize weights and biases to 0
@@ -28,6 +28,8 @@ synth_optim = torch.optim.Adam(synth.parameters())
 
 # run a forward pass
 out, h_n = gru(random_input)
+
+# the target in the loss is just 3s (arbitrary)
 ce = loss(out, 3*torch.ones(10,20, dtype=torch.long))
 
 # backward the loss, make sure to retain the graph to allow for second backward pass
@@ -53,7 +55,10 @@ true_grad = torch.autograd.grad(outputs = ce, inputs = h_n, retain_graph = True)
 
 # get bootstraped gradient (bottom of page 3)
 h_n2.backward(torch.ones(h_n2.shape), inputs = h_n, retain_graph = True)
-bootstrap_grad = true_grad + h_n.grad * synth_grad.detach()
+bootstrap_grad = true_grad + synth_grad.detach() * h_n.grad
+
+# make sure the grad doesn't go anywhere
+h_n.grad = None
 
 # update synthesizer
 synth_loss = mse_loss(synth_grad, bootstrap_grad.detach())
