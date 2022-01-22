@@ -39,6 +39,9 @@ ce.backward(retain_graph = True)
 synth_grad = synth(h_n.detach())
 h_n.backward(gradient = synth_grad.detach()*FACTOR, retain_graph = True)
 
+# AUXILIARY GRADIENTS
+aux = synth(out[:-1].detach())
+
 optim.step()
 optim.zero_grad()
 h_n = h_n.detach()
@@ -50,6 +53,13 @@ h_n.requires_grad = True
 out, h_n2 = gru(random_input, h_n)
 ce = loss(out, 3*torch.ones(10,20, dtype=torch.long))
 
+# AUXILIARY GRADIENTS
+aux2 = synth(out[:-1].detach())
+
+# AUX TASK
+aux_loss = mse_loss(aux, aux2)
+aux_loss.backward()
+
 # get the true gradient dL/dh_n
 true_grad = torch.autograd.grad(outputs = ce, inputs = h_n, retain_graph = True)[0]
 
@@ -57,7 +67,7 @@ true_grad = torch.autograd.grad(outputs = ce, inputs = h_n, retain_graph = True)
 h_n2.backward(torch.ones(h_n2.shape), inputs = h_n, retain_graph = True)
 bootstrap_grad = true_grad + synth_grad.detach() * h_n.grad
 
-# make sure the grad doesn't go anywhere
+# make sure this grad doesn't go anywhere since it's just an intermediate calculation
 h_n.grad = None
 
 # update synthesizer
@@ -70,10 +80,10 @@ ce.backward(retain_graph = True)
 
 # pass the synthetic gradient backwards
 synth_grad = synth(h_n2.detach())
-h_n.backward(gradient = synth_grad.detach()*FACTOR, retain_graph = True)
+h_n2.backward(gradient = synth_grad.detach()*FACTOR, retain_graph = True)
 
 optim.step()
 optim.zero_grad()
-h_n = h_n.detach()
+h_n2 = h_n2.detach()
 
 # TODO: turn this in to a loop!
