@@ -25,7 +25,7 @@ synth[2].bias.data.fill_(0)
 class GRU_Layer(nn.Module):
     def __init__(self):
         super().__init__()
-        self.embedding = nn.embedding(size,size)
+        self.embedding = nn.Embedding(size,size)
         self.gru = nn.GRU(size, hidden_size = size)
         self.linear_layer = nn.Linear(size, size)
         self.embedding.weight = self.linear_layer.weight
