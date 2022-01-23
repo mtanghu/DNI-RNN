@@ -11,7 +11,7 @@ BATCH_SIZE = 32
 
 # size is the hidden and output size
 size = 20
-random_input = torch.ones(10, BATCH_SIZE, size)
+random_input = torch.ones(10, BATCH_SIZE, dtype = torch.long)
 loss = nn.CrossEntropyLoss()
 mse_loss = nn.MSELoss()
 
@@ -25,11 +25,15 @@ synth[2].bias.data.fill_(0)
 class GRU_Layer(nn.Module):
     def __init__(self):
         super().__init__()
+        self.embedding = nn.Embedding(size,size)
         self.gru = nn.GRU(size, hidden_size = size)
         self.linear_layer = nn.Linear(size, size)
+        self.embedding.weight = self.linear_layer.weight
+       
         
     def forward(self, input, h0):
-        out, hn = self.gru(input, h0)
+        x = self.embedding(input)
+        out, hn = self.gru(x, h0)
         out = self.linear_layer(out)
         return out, hn
 
