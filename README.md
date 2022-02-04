@@ -18,10 +18,10 @@ pip install .
 
 ## Usage
 
-You can add DNI to your existing RNN models with ONLY 5 MORE LINES. Here is an example of a basic pytorch training loop with an lstm, added lines are denoted by ```NEW LINE HERE```. Without the added lines
+You can add DNI to your existing RNN models with ONLY 5 MORE LINES. Here is an example of a basic pytorch training loop with an LSTM with Truncated Backpropgration Through Time (TBPTT). Added lines are denoted by ```# NEW LINE HERE```.
 
 ```python
-# NEW CODE HERE (1): remember to import package
+# NEW LINE HERE (1): remember to import package
 import dni
 import torch
 import torch.nn as nn
@@ -34,23 +34,23 @@ rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 optim = torch.optim.SGD(rnn.parameters())
 loss_func = nn.CrossEntropyLoss()
 
-# NEW CODE HERE (2): instantiate DNI model, let the model know if you're using an LSTM
+# NEW LINE HERE (2): instantiate DNI model, let the model know if you're using an LSTM
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
 
 for X, y in dataloader:
     hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad=True).cuda(),
            torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad=True).cuda())
     
-    # NEW CODE HERE (3): initialize hidden state with the synthesizer at the start of the training example
+    # NEW LINE HERE (3): initialize hidden state with the synthesizer at the start of the training example
     hn = synth.init_hidden(hn)
     
      # split into TBPTT size sections
-    for split in torch.split(batch, TBPTT, dim = 0):
+    for split in torch.split(batch, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
         loss = loss_func(out, "your targets here")
         
-        # NEW CODE HERE (4): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
-        # DO NOT detach this hn as you would with TBPTT, the hidden state needs to have requires_grad=True, the synthesizer will handle this
+        # NEW LINE HERE (4): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
+        # DO NOT detach this hn as you would with TBPTT, the synthesizer will handle this (reason: the hidden state needs to have requires_grad=True)
         hn = synth.backward_synthetic(h_n, cross_loss)
         
         loss.backward()
@@ -59,7 +59,7 @@ for X, y in dataloader:
         optim.step()
         optim.zero_grad()
     
-    # NEW CODE HERE (5): finish the training example by updating the synthesizer
+    # NEW LINE HERE (5): finish the training example by updating the synthesizer
     synth.step()
 ```
 
