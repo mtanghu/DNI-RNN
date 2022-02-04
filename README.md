@@ -26,7 +26,7 @@ Start by creating a synthesizer for your model passing the hidden size as well a
 
 ```python
 import dni
-synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 ```
 
 ### Step 2:
@@ -59,7 +59,7 @@ BATCH_SIZE = 16
 rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
 # NEW LINE HERE (1): instantiate DNI model
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
 for X, y in dataloader:
     hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
@@ -93,7 +93,7 @@ TBPTT = 5
 rnn_cell = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
 # NEW LINE HERE (1): instantiate DNI mode and let it know if you're using an LSTM/the hidden state comes from a LSTM
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
 hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
       torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
