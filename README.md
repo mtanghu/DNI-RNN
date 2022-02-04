@@ -1,6 +1,6 @@
 # Decoupled Neural Interfaces for RNNs in pytorch
 
-This is a tiny library based on [Decoupled Neural Interface using Synthetic Gradients](https://arxiv.org/abs/1608.05343) specifically the part on using synthetic gradienst for RNNs. After extensive testing I was able to make some minor improvements that seem to have a significant effect on training stability (which the authors noted to be an issue) as well as increasing the effectiveness of the synthetic gradients (explained later).
+This is a tiny library based on [Decoupled Neural Interface using Synthetic Gradients](https://arxiv.org/abs/1608.05343) specifically the part on using synthetic gradients for RNNs. After extensive testing I was able to make some minor improvements that seem to have a significant effect on training stability (which the authors noted to be an issue) as well as increasing the effectiveness of the synthetic gradients (explained later).
 
 ## TODO: EXPLAIN CONCEPT WITH DIAGRAM, THEN EXPLAIN MATH AND IMPROVEMENT
 ## TODO: SHOW A GRAPH WITH TIMING OF SPEED INCREASE, ALSO SHOW MEMORY IMPROVEMENT
@@ -41,7 +41,7 @@ for X, y in dataloader:
     hn = synth.init_hidden(hn)
     
     # split training example into TBPTT size sections
-    for split in torch.split(batch, TBPTT, dim = 1):
+    for split in torch.split(X, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
         loss = loss_func(out, y)
         
@@ -49,12 +49,51 @@ for X, y in dataloader:
         hn = synth.backward_synthetic(h_n, cross_loss)
         
         loss.backward()
-
         optim.step()
         optim.zero_grad()
     
     # NEW LINE HERE (5): finish the training example by updating the synthesizer
     synth.step()
+```
+
+Alternative example with LSTMCell (where you feed inputs in one at a time rather than as a sequence) and you use an if statement to truncate the BPTT.
+
+```python
+# NEW LINE HERE (1): remember to import package
+import dni
+
+TBPTT = 5
+
+rnn = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
+
+# NEW LINE HERE (2): instantiate DNI mode and let it know if you're using an LSTM/the hidden state comes from a LSTM
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+
+hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE),
+      torch.ones(1, BATCH_SIZE, MODEL_SIZE))
+
+# NEW LINE HERE (3): initialize hidden state with the synthesizer at the start of the training example
+hn = synth.init_hidden(hn)
+
+counter = 0
+losses = 0
+for X, y in dataloader:
+    out, hn = rnn(X, hn)
+    losses += loss_func(out, y)
+    
+    if counter == TBPTT:
+        # NEW LINE HERE (4): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
+        hn = synth.backward_synthetic(h_n, losses)
+
+        losses.backward()
+        optim.step()
+        optim.zero_grad()
+
+        # NEW LINE HERE (5): finish the training example by updating the synthesizer
+        synth.step()
+        counter = 0
+
+    counter += 1
 ```
 
 
