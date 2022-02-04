@@ -2,11 +2,6 @@
 
 This is a tiny library based on [Decoupled Neural Interface using Synthetic Gradients](https://arxiv.org/abs/1608.05343) specifically the part on using synthetic gradients for RNNs. After extensive testing I was able to make some minor improvements that seem to have a significant effect on training stability (which the authors noted to be an issue) as well as increasing the effectiveness of the synthetic gradients (explained later).
 
-### TODO: EXPLAIN CONCEPT WITH DIAGRAM, THEN EXPLAIN MATH AND IMPROVEMENT
-### TODO: SHOW A GRAPH WITH TIMING OF SPEED INCREASE, ALSO SHOW MEMORY IMPROVEMENT
-### TODO: MAKE THIS FRIENDLY FOR NON PYTORCH USERS, SPECIFICALLY ADD DETAILS ABOUT BPTT AND HOW RNNs WORK IN PYTORCH
-### TODO: explain difference between this package and others!
-
 ## Installation
 
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install
@@ -16,6 +11,15 @@ git clone https://github.com/mtanghu/DNI-RNN.git
 cd DNI-RNN
 pip install .
 ```
+
+## Why use this package
+
+1. Seemingly this is the only Decoupled Neural Interface (DNI) library that fully implements DNI with RNNs according to the paper (ie. with bootstrapped gradients and the auxiliary task)
+2. There is a `use_improvement` parameter that greatly improves the preformance DNI
+3. We care about UI! There are many checks, warnings, and assertions with helpful explainations to make sure this library is working as intended.
+
+### TODO: EXPLAIN CONCEPT WITH DIAGRAM
+### TODO: MAKE THIS FRIENDLY FOR NON PYTORCH USERS, SPECIFICALLY ADD DETAILS ABOUT BPTT AND HOW RNNs WORK IN PYTORCH
 
 ## Usage
 
@@ -45,8 +49,8 @@ Lastly, after you're done with the training example/batch, make sure to update t
 synth.step()
 ```
 
-### Basic example with nn.LSTM() and existing TBPTT training loop:
-Here is an example of a basic pytorch training loop that hopefully mirrors what you have already. Added lines are denoted by ```# NEW LINE HERE```. Note that this code won't actually run and is just meant to show where new code should be added. If you'd like working examples see `examples/`.
+### Basic example with LSTM and existing TBPTT training loop:
+Here is an example of a basic pytorch training loop that hopefully mirrors what you have already. Added lines are denoted by `# NEW LINE HERE`. Note that this code won't actually run and is just meant to show where new code should be added. If you'd like working examples see `examples/`.
 
 ```python
 # NEW LINE HERE: remember to import package
@@ -124,7 +128,7 @@ for X, y in dataloader:
 ## Contributing
 Contributing is welcome! I'd love to turn this into THE package for Decoupled Neural Interfaces.
 
-Given that this package already implements improvements over the original paper, there's no reason to only implement ideas in the paper. The paper mentions that synthetic gradients in RNNs is analgous to temporal credit in Reinforcement Learning so I wonder if this package could be used in that direction.
+Given that this package already implements improvements over the original paper, there's no reason to only implement ideas in the paper.
 
 If you'd like to contribute make sure to install with the -e flag so that edits will be loaded
 
