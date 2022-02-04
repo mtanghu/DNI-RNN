@@ -28,11 +28,11 @@ import dni
 synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
 ```
 
-The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future) as well as internally update it's own synthetic gradient model using the real losses passed. This will also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS BEFORE YOU CALL `loss.backward()`__
+The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS BEFORE YOU CALL `loss.backward()`__
 
 ```python
 # INSIDE TRAINING LOOP
-    hidden_state = synth.backward_synthetic(hidden_state, loss)
+    hidden_state = synth.backward_synthetic(hidden_state)
 ```
 
 Lastly after you're done with the training example/batch, make sure to update the synthesizer so that it will make better synthetic gradient predictions for the next batch.
