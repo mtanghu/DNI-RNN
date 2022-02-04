@@ -56,6 +56,7 @@ for X, y in dataloader:
     synth.step()
 ```
 
+
 Alternative example with LSTMCell (where you feed inputs in one at a time rather than as a sequence) and you use an if statement to truncate the BPTT.
 
 ```python
