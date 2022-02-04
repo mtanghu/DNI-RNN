@@ -33,7 +33,7 @@ class LSTM_plus_embedding(nn.Module):
     
 
 if __name__ == "__main__":
-    device = 'cpu'
+    device = 'cuda'
     
     ### DATA ###
     # create prompts with a stop character at the end
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     loss = nn.CrossEntropyLoss()
 
     # instantiate DNI model that will backward synthetic gradients
-    synth = dni.Synthesizer(size = D_MODEL, is_lstm = True, device = device)
+    synth = dni.Synthesizer(size = D_MODEL, is_lstm = True).cuda()
     
     losses = []
     synth_losses = []
@@ -63,11 +63,10 @@ if __name__ == "__main__":
             # standard forward pass
             out, h_n = rnn(split, h_n)
             cross_loss = loss(out.view(-1, len(ALPHABET)+1), torch.zeros(BATCH_SIZE, TBPTT, dtype = torch.long).view(-1).to(device))
+            cross_loss.backward(retain_graph = True)
             
             # just add ONE line for synthetic gradients
             h_n = synth.backward_synthetic(h_n)
-            
-            cross_loss.backward()
 
             torch.nn.utils.clip_grad_norm_(rnn.parameters(), 25)
             optim.step()
@@ -78,11 +77,10 @@ if __name__ == "__main__":
             # standard forward pass
             out, h_n = rnn(torch.zeros(TBPTT, BATCH_SIZE, dtype = torch.long).to(device), h_n)
             cross_loss = loss(out.reshape(-1, len(ALPHABET)+1), split.reshape(-1))
+            cross_loss.backward(retain_graph = True)
             
             # just add ONE line for synthetic gradients
             h_n = synth.backward_synthetic(h_n)
-            
-            cross_loss.backward()
 
             losses.append(cross_loss.item())
 
