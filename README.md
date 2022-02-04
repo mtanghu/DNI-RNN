@@ -26,7 +26,7 @@ Start by creating a synthesizer for your model passing the hidden size as well a
 
 ```python
 import dni
-synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
+synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).to('cpu')
 ```
 
 ### Step 2:
