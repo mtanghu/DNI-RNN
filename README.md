@@ -30,7 +30,7 @@ BATCH_SIZE = 16
 
 rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
-# NEW LINE HERE (2): instantiate DNI model, let the model know if you're using an LSTM
+# NEW LINE HERE (2): instantiate DNI mode and let it know if you're using an LSTM/the hidden state comes from a LSTM
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
 
 for X, y in dataloader:
