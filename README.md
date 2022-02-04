@@ -38,7 +38,7 @@ The next step happens within your training loop. After calculating the loss for 
 ```
 
 ### Step 3:
-Lastly after you're done with the training example/batch, make sure to update the synthesizer so that it will make better synthetic gradient predictions for the next batch.
+Lastly, after you're done with the training example/batch, make sure to update the synthesizer so that it will make better synthetic gradient predictions for the next batch.
 
 ```python
 # After last input in batch goes through the RNN
@@ -62,8 +62,7 @@ rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
 for X, targets in dataloader:
-    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
-          torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
+    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
     
     # split training example into TBPTT size sections
     for split in torch.split(X, TBPTT, dim = 1):
@@ -95,8 +94,7 @@ rnn_cell = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 # NEW LINE HERE (1): instantiate DNI model
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
-hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
-      torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
+hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
 
 counter = 0
 losses = 0
