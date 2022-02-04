@@ -22,7 +22,7 @@ pip install .
 You can add DNI to your existing RNN models with ONLY 3 MORE LINES (not including the import). Let's break down how this works:
 
 ### Step 1:
-Start by creating a synthesizer for your model passing the hidden size as well as if you're using an LSTM (since an lstm has both a hidden state and a cell state which each need their own gradients). remember to say you don't need to use base LSTM
+Start by creating a synthesizer for your model passing the hidden size as well as if you're using an LSTM (since an lstm has both a hidden state and a cell state which each need their own gradients). NOTE: you should be able to apply this package to all kinds of RNNs like ones that build on top of LSTMs (ie. with embeddings, weight typing etc.) this can be seen in `examples/copy_task.py`
 
 ```python
 import dni
@@ -30,7 +30,7 @@ synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 ```
 
 ### Step 2:
-The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS BEFORE YOU CALL `loss.backward()`__
+The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS AFTER `loss.backward(retain_graph=True)` AND BEFORE `optimizer.step()`__ we need to retain the graph so the synthesizer can use it (don't worry the synthesizer will free it).
 
 ```python
 # INSIDE TRAINING LOOP
@@ -61,14 +61,14 @@ rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 # NEW LINE HERE (1): instantiate DNI model
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
-for X, y in dataloader:
+for X, targets in dataloader:
     hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
           torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
     
     # split training example into TBPTT size sections
     for split in torch.split(X, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
-        loss = loss_func(out, y)
+        loss = loss_func(out, targets)
         loss.backward(retain_graph = True)
         
         # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
@@ -104,7 +104,7 @@ for X, y in dataloader:
     out, hn = rnn_cell(X, hn)
     losses += loss_func(out, y)
     
-    if counter == TBPTT:
+    if counter == TBPTT - 1:
         losses.backward(retain_graph = True)
     
         # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
@@ -115,6 +115,8 @@ for X, y in dataloader:
 
         # NEW LINE HERE (3): finish the training example by updating the synthesizer
         synth.step()
+        
+        losses = 0
         counter = 0
 
     counter += 1
