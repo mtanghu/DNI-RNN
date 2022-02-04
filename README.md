@@ -3,7 +3,7 @@
 This is a tiny library based on [Decoupled Neural Interface using Synthetic Gradients](https://arxiv.org/abs/1608.05343) specifically the part on using synthetic gradienst for RNNs. After extensive testing I was able to make some minor improvements that seem to have a significant effect on training stability (which the authors noted to be an issue) as well as increasing the effectiveness of the synthetic gradients (explained later).
 
 ## TODO: EXPLAIN CONCEPT WITH DIAGRAM, THEN EXPLAIN MATH AND IMPROVEMENT
-## TODO: SHOW A GRAPH WITH TIMING OF SPEED INCREASE
+## TODO: SHOW A GRAPH WITH TIMING OF SPEED INCREASE, ALSO SHOW MEMORY IMPROVEMENT
 ## TODO: MAKE THIS FRIENDLY FOR NON PYTORCH USERS, SPECIFICALLY ADD DETAILS ABOUT BPTT AND HOW RNNs WORK IN PYTORCH
 
 ## Installation
