@@ -21,21 +21,24 @@ pip install .
 
 You can add DNI to your existing RNN models with ONLY 3 MORE LINES (not including the import). Let's break down how this works:
 
-Start by creating a synthesizer for your model passing the hidden size as well as if you're using an LSTM (since an lstm has both a hidden state and a cell state which each need their own gradients). remember to say you don't need to use base LSTM
+### Step 1:
+Start by creating a synthesizer for your model passing the hidden size as well as if you're using an LSTM (since an lstm has both a hidden state and a cell state which each need their own gradients). NOTE: you should be able to apply this package to all kinds of RNNs like ones that build on top of LSTMs (ie. with embeddings, weight typing etc.) this can be seen in `examples/copy_task.py`
 
 ```python
 import dni
-synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 ```
 
-The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS BEFORE YOU CALL `loss.backward()`__
+### Step 2:
+The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS AFTER `loss.backward(retain_graph=True)` AND BEFORE `optimizer.step()`__ we need to retain the graph so the synthesizer can use it (don't worry the synthesizer will free it).
 
 ```python
 # INSIDE TRAINING LOOP
     hidden_state = synth.backward_synthetic(hidden_state)
 ```
 
-Lastly after you're done with the training example/batch, make sure to update the synthesizer so that it will make better synthetic gradient predictions for the next batch.
+### Step 3:
+Lastly, after you're done with the training example/batch, make sure to update the synthesizer so that it will make better synthetic gradient predictions for the next batch.
 
 ```python
 # After last input in batch goes through the RNN
@@ -56,21 +59,20 @@ BATCH_SIZE = 16
 rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
 # NEW LINE HERE (1): instantiate DNI model
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
-for X, y in dataloader:
-    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
-          torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
+for X, targets in dataloader:
+    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
     
     # split training example into TBPTT size sections
     for split in torch.split(X, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
-        loss = loss_func(out, y)
+        loss = loss_func(out, targets)
+        loss.backward(retain_graph = True)
         
         # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
-        hn = synth.backward_synthetic(hn, loss)
+        hn = synth.backward_synthetic(hn)
         
-        loss.backward()
         optim.step()
         optim.zero_grad()
     
@@ -89,11 +91,10 @@ TBPTT = 5
 
 rnn_cell = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
-# NEW LINE HERE (1): instantiate DNI mode and let it know if you're using an LSTM/the hidden state comes from a LSTM
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
+# NEW LINE HERE (1): instantiate DNI model
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
-hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
-      torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True))
+hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
 
 counter = 0
 losses = 0
@@ -101,16 +102,19 @@ for X, y in dataloader:
     out, hn = rnn_cell(X, hn)
     losses += loss_func(out, y)
     
-    if counter == TBPTT:
-        # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
+    if counter == TBPTT - 1:
+        losses.backward(retain_graph = True)
+    
+        # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
         hn = synth.backward_synthetic(h_n, losses)
-
-        losses.backward()
+        
         optim.step()
         optim.zero_grad()
 
         # NEW LINE HERE (3): finish the training example by updating the synthesizer
         synth.step()
+        
+        losses = 0
         counter = 0
 
     counter += 1
