@@ -56,7 +56,7 @@ if __name__ == "__main__":
         batch = batch.to(device)
         
         # initialize the hidden state with synth
-        h_n = (torch.ones(1, BATCH_SIZE, D_MODEL, requires_grad=True).to(device), torch.ones(1, BATCH_SIZE, D_MODEL, requires_grad=True).to(device))
+        h_n = (torch.ones(1, BATCH_SIZE, D_MODEL).to(device), torch.ones(1, BATCH_SIZE, D_MODEL).to(device))
 
         # split into TBPTT size sections
         for split in torch.split(batch, TBPTT, dim = 0):

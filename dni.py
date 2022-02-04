@@ -6,6 +6,10 @@ from torch.autograd import Variable
 # TODO: add help section for this!! -- maybe make a doc for this somewhere? like in a src file?
 # TODO: assert somewhere the hidden state needs to have requires_grad=True, and explain why!
 # TODO: figure out how to make an assert that will stop people from forgetting to set retain_grad to true
+    # TODO: add assert message to the prev.grad is not None that is helpful
+
+# TODO: ADD A COMMENT ABOUT THE ACCUMULATED GRADIENTS!
+# TODO: think about and find out what happens with stacked GRUs and LSTMs
 
 
 
@@ -73,6 +77,7 @@ class Synthesizer(nn.Module):
             assert self.prev_hidden.grad is not None
             
             # update synthesizer
+            # TODO: ADD A COMMENT ABOUT THE GRADIENTS ACCUMULATED HERE!
             synth_loss = self.loss_func(self.prev_synth, self.prev_hidden.grad)
             synth_loss.backward()
 
