@@ -63,10 +63,10 @@ BATCH_SIZE = 16
 rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
 # NEW LINE HERE (1): instantiate DNI model
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).to('cpu')
 
 for X, targets in dataloader:
-    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
+    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE))
     
     # split training example into TBPTT size sections
     for split in torch.split(X, TBPTT, dim = 1):
@@ -96,9 +96,9 @@ TBPTT = 5
 rnn_cell = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
 # NEW LINE HERE (1): instantiate DNI model
-synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
+synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).to('cpu')
 
-hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE)
+hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE), torch.ones(1, BATCH_SIZE, MODEL_SIZE))
 
 counter = 0
 losses = 0
