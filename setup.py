@@ -10,7 +10,7 @@ setup(
     description=(
         'Decoupled Neural Interfaces using Synthetic Gradients for PyTorch'
     ),
-    py_modules=['dni-rnn'],
+    py_modules=['dni'],
     install_requires=[
         'torch>=1.0.0'
     ]
