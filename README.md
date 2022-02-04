@@ -69,11 +69,11 @@ for X, y in dataloader:
     for split in torch.split(X, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
         loss = loss_func(out, y)
+        loss.backward(retain_graph = True)
         
         # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
-        hn = synth.backward_synthetic(hn, loss)
+        hn = synth.backward_synthetic(hn)
         
-        loss.backward()
         optim.step()
         optim.zero_grad()
     
@@ -92,7 +92,7 @@ TBPTT = 5
 
 rnn_cell = nn.LSTMCell(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
 
-# NEW LINE HERE (1): instantiate DNI mode and let it know if you're using an LSTM/the hidden state comes from a LSTM
+# NEW LINE HERE (1): instantiate DNI model
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True)
 
 hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad = True),
@@ -105,10 +105,11 @@ for X, y in dataloader:
     losses += loss_func(out, y)
     
     if counter == TBPTT:
-        # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
+        losses.backward(retain_graph = True)
+    
+        # NEW LINE HERE (2): backward a synthetic gradient along side the loss gradient
         hn = synth.backward_synthetic(h_n, losses)
-
-        losses.backward()
+        
         optim.step()
         optim.zero_grad()
 
