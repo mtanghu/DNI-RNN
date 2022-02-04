@@ -57,7 +57,6 @@ if __name__ == "__main__":
         
         # initialize the hidden state with synth
         h_n = (torch.ones(1, BATCH_SIZE, D_MODEL, requires_grad=True).to(device), torch.ones(1, BATCH_SIZE, D_MODEL, requires_grad=True).to(device))
-        h_n = synth.init_hidden(h_n)
 
         # split into TBPTT size sections
         for split in torch.split(batch, TBPTT, dim = 0):
@@ -66,7 +65,7 @@ if __name__ == "__main__":
             cross_loss = loss(out.view(-1, len(ALPHABET)+1), torch.zeros(BATCH_SIZE, TBPTT, dtype = torch.long).view(-1).to(device))
             
             # just add ONE line for synthetic gradients
-            h_n = synth.backward_synthetic(h_n, cross_loss)
+            h_n = synth.backward_synthetic(h_n)
             
             cross_loss.backward()
 
@@ -81,7 +80,7 @@ if __name__ == "__main__":
             cross_loss = loss(out.reshape(-1, len(ALPHABET)+1), split.reshape(-1))
             
             # just add ONE line for synthetic gradients
-            h_n = synth.backward_synthetic(h_n, cross_loss)
+            h_n = synth.backward_synthetic(h_n)
             
             cross_loss.backward()
 

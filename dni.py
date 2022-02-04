@@ -3,19 +3,21 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 
+# TODO: add help section for this!! -- maybe make a doc for this somewhere? like in a src file?
 # TODO: assert somewhere the hidden state needs to have requires_grad=True, and explain why!
-# TODO: think about/implement allowing loss from synthetic model to backward into the model
-# TODO: add help section for this!!
+# TODO: figure out how to make an assert that will stop people from forgetting to set retain_grad to true
+
 
 
 class Synthesizer(nn.Module):
-    def __init__(self, size, is_lstm = True, hidden_layers = 1, factor = 1, activation = nn.GELU,
+    def __init__(self, size, is_lstm = True, hidden_layers = 1, factor = 1, allow_backwarding = False, activation = nn.GELU,
                  optimizer = torch.optim.Adam, lr = .0001, aux = True, device = 'cuda', use_improvement = True):
         super().__init__()
         self.factor = factor
         self.device = device
         self.is_lstm = is_lstm
         self.use_improvement = use_improvement
+        self.allow_backwarding = allow_backwarding
         
         if self.is_lstm:
             # the hidden state and cell state will be concatenated (as per paper) thus doubling gradient size
@@ -47,16 +49,18 @@ class Synthesizer(nn.Module):
         self.synthetic_loss = 0
 
 
-    def backward_synthetic(self, last_hidden, loss):
+    def backward_synthetic(self, last_hidden):
 #         assert self.prev_hidden is None or self.prev_hidden.grad is not None, "make sure to set retain_graph=True for backward call"
         
         last_hidden = torch.cat(last_hidden, dim = 2) if self.is_lstm else last_hidden
         
-        # predict future losses
-        synthetic_gradient = self.synthesizer(last_hidden.detach())
-            
+        # predict future losses, not detach will allow losses from synthetic gradient predict to flow into the model
+        if self.allow_backwarding:
+            synthetic_gradient = self.synthesizer(last_hidden)
+        else:
+            synthetic_gradient = self.synthesizer(last_hidden.detach())
+
         # backward this future loss scaled by a factor (.1 in the paper) for stable training
-        # no need to keep graph around
         last_hidden.backward(gradient = synthetic_gradient.detach() * self.factor, retain_graph = True)
         
         if self.aux and self.predicted_grad is not None:
