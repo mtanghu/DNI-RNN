@@ -18,44 +18,38 @@ pip install .
 
 ## Usage
 
-You can add DNI to your existing RNN models with ONLY 5 MORE LINES. Here is an example of a basic pytorch training loop with an LSTM with Truncated Backpropgration Through Time (TBPTT). Added lines are denoted by ```# NEW LINE HERE```.
+You can add DNI to your existing RNN models with ONLY 5 MORE LINES. Here is an example of a basic pytorch training loop with an LSTM with Truncated Backpropgration Through Time (TBPTT). Added lines are denoted by ```# NEW LINE HERE```. Note that this code won't actually run and is just meant to show where new code should be added. If you'd like working examples see `examples/`.
 
 ```python
 # NEW LINE HERE (1): remember to import package
 import dni
-import torch
-import torch.nn as nn
 
 MODEL_SIZE = 10
 TBPTT = 3
 BATCH_SIZE = 16
 
 rnn = nn.LSTM(input_size=MODEL_SIZE, hidden_size=MODEL_SIZE)
-optim = torch.optim.SGD(rnn.parameters())
-loss_func = nn.CrossEntropyLoss()
 
 # NEW LINE HERE (2): instantiate DNI model, let the model know if you're using an LSTM
 synth = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).cuda()
 
 for X, y in dataloader:
-    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad=True).cuda(),
-           torch.ones(1, BATCH_SIZE, MODEL_SIZE, requires_grad=True).cuda())
+    hn = (torch.ones(1, BATCH_SIZE, MODEL_SIZE),
+          torch.ones(1, BATCH_SIZE, MODEL_SIZE))
     
     # NEW LINE HERE (3): initialize hidden state with the synthesizer at the start of the training example
     hn = synth.init_hidden(hn)
     
-     # split into TBPTT size sections
+    # split training example into TBPTT size sections
     for split in torch.split(batch, TBPTT, dim = 1):
         out, hn = rnn(split, hn)
-        loss = loss_func(out, "your targets here")
+        loss = loss_func(out, y)
         
         # NEW LINE HERE (4): backward a synthetic gradient along side the loss gradient (note: do before the loss.backward() call))
-        # DO NOT detach this hn as you would with TBPTT, the synthesizer will handle this (reason: the hidden state needs to have requires_grad=True)
         hn = synth.backward_synthetic(h_n, cross_loss)
         
         loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(rnn.parameters(), 25)
         optim.step()
         optim.zero_grad()
     
@@ -67,7 +61,7 @@ for X, y in dataloader:
 ## Contributing
 Contributing is welcome! I'd love to turn this into THE package for Decoupled Neural Interfaces.
 
-Given that this package already implements improvements over the original paper, there's no reason to only implement ideas in the paper. The paper mentions that synthetic gradients is in RNNs is analgous to temporal credit in Reinforcement learning so I wonder if this package could be used in that direction.
+Given that this package already implements improvements over the original paper, there's no reason to only implement ideas in the paper. The paper mentions that synthetic gradients in RNNs is analgous to temporal credit in Reinforcement Learning so I wonder if this package could be used in that direction.
 
 If you'd like to contribute make sure to install with the -e flag so that edits will be loaded
 
