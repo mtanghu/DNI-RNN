@@ -1,0 +1,3 @@
+[submodule "examples/awd-lstm-lm"]
+	path = examples/awd-lstm-lm
+	url = https://github.com/mtanghu/awd-lstm-lm
