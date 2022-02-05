@@ -9,7 +9,8 @@ import traceback
     # just somewhere the parameters need to be explained
 # TODO: think about and find out what happens with stacked GRUs and LSTMs
 
-# TODO: add one last 
+# TODO: add last few try catch blocks with the synthetic losses to make sure the .step() is used correctly
+# TODO: maybe make a second synthesizer class called SynthesizerZero() which just returns the synthesizier but with allow backwarding flag and aux = False 
 
 
 
@@ -39,7 +40,8 @@ class Synthesizer(nn.Module):
         # create auxiliary layers
         self.aux = True
         if self.aux:
-            aux_layers = [nn.Linear(size, size)] + [nn.Sequential(activation(), nn.Linear(size, size)) for i in range(hidden_layers)]
+            #aux_layers = [nn.Linear(size, size)] + [nn.Sequential(activation(), nn.Linear(size, size)) for i in range(hidden_layers)]
+            aux_layers = [nn.Linear(size, size)]
             self.aux_layers = nn.Sequential(*aux_layers)
 
         # somehow this parameters call works
@@ -75,7 +77,7 @@ class Synthesizer(nn.Module):
             
         if self.prev_hidden is not None and self.prev_hidden.grad is None:
             raise ValueError(
-                "Loss gradient not found, make sure to run .backward_synthetic() AFTER loss.backward(retain_graph=True). "
+                "Loss gradient not found, make sure to run .backward_synthetic() AFTER loss.backward(retain_graph=True) and BEFORE optimizer.step()"
                 "The graph needs to be retained since .backward_synthetic() uses it."
                 )
 
