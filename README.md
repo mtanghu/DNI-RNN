@@ -15,15 +15,15 @@ pip install .
 ## Why use this package
 
 1. Seemingly this is the only Decoupled Neural Interface (DNI) library that fully implements DNI with RNNs according to the paper (ie. with bootstrapped gradients and the auxiliary task)
-2. There is a `use_improvement` parameter that greatly improves the preformance DNI
-3. We care about UI! There are many checks, warnings, and assertions with helpful explainations to make sure this library is working as intended.
+2. There is a `use_improvement` parameter that greatly improves the performance DNI
+3. We care about UI! There are many checks, warnings, and assertions with helpful explanations to make sure this library is working as intended.
 
 ### TODO: EXPLAIN CONCEPT WITH DIAGRAM
 ### TODO: MAKE THIS FRIENDLY FOR NON PYTORCH USERS, SPECIFICALLY ADD DETAILS ABOUT BPTT AND HOW RNNs WORK IN PYTORCH
 
 ## Usage
 
-You can add DNI to your existing RNN models with ONLY 3 MORE LINES (not including the import). Let's break down how this works:
+You can add DNI to your existing RNN models with ***ONLY 3 MORE LINES*** (not including the import). Let's break down how this works:
 
 ### Step 1:
 Start by creating a synthesizer for your model passing the hidden size as well as if you're using an LSTM (since an lstm has both a hidden state and a cell state which each need their own gradients). NOTE: you should be able to apply this package to all kinds of RNNs like ones that build on top of LSTMs (ie. with embeddings, weight typing etc.) this can be seen in `examples/copy_task.py`
@@ -34,7 +34,7 @@ synthesizer = dni.Synthesizer(size = MODEL_SIZE, is_lstm = True).to('cpu')
 ```
 
 ### Step 2:
-The next step happens within your training loop. After calculating the loss for you model pass the last hidden state and the that loss to synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS AFTER `loss.backward(retain_graph=True)` AND BEFORE `optimizer.step()`__ we need to retain the graph so the synthesizer can use it (don't worry the synthesizer will free it).
+The next step happens within your training loop. After calculating the loss for your model pass the last hidden state to the synthesizer. The synthesizer will backward a synthetic gradient (corresponding to losses from the future). We need to also pass back the hidden state which is detached (to save memory and computation time) but also has `retain_grad=True` to allow future gradients to unroll backwards to the hidden state (normally they wouldn't). __MAKE SURE TO RUN THIS AFTER `loss.backward(retain_graph=True)` AND BEFORE `optimizer.step()`__ we need to retain the graph so the synthesizer can use it (don't worry the synthesizer will free it).
 
 ```python
 # INSIDE TRAINING LOOP
