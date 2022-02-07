@@ -78,7 +78,8 @@ class Synthesizer(nn.Module):
         if self.prev_hidden is not None and self.prev_hidden.grad is None:
             raise ValueError(
                 "Loss gradient not found, make sure to run .backward_synthetic() AFTER loss.backward(retain_graph=True) and BEFORE optimizer.step()"
-                "The graph needs to be retained since .backward_synthetic() uses it."
+                "The graph needs to be retained since .backward_synthetic() uses it. "
+                "This error can also happen if you detach your hidden state after calling .backward_synthetic(). Delete the detach line or put it before""
                 )
 
         try:
