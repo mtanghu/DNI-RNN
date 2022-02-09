@@ -16,7 +16,7 @@ import traceback
 
 class Synthesizer(nn.Module):
     def __init__(self, size, is_lstm = True, hidden_layers = 1, factor = 1, allow_backwarding = False, activation = nn.GELU,
-                 optimizer = torch.optim.Adam, lr = .0001, aux = False, use_improvement = True):
+                 optimizer = torch.optim.AdamW, lr = .0001, aux = False, use_improvement = True):
         super().__init__()
         self.factor = factor
         self.is_lstm = is_lstm
