@@ -18,8 +18,6 @@ pip install .
 2. There is a `use_improvement` parameter that greatly improves the performance DNI
 3. We care about UI! There are many checks, warnings, and assertions with helpful explanations to make sure this library is working as intended.
 
-### TODO: EXPLAIN CONCEPT WITH DIAGRAM
-### TODO: MAKE THIS FRIENDLY FOR NON PYTORCH USERS, SPECIFICALLY ADD DETAILS ABOUT BPTT AND HOW RNNs WORK IN PYTORCH
 
 ## Usage
 
